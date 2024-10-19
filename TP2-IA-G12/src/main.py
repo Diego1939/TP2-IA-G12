@@ -97,20 +97,11 @@ toolbox.register("mutate", mutar_banda)
 def execute_ga_with_deap():
 
     population = toolbox.population(n=config.CONFIG.POPULATION_SIZE)
-    for ind in population:
-        ind.fitness.values = toolbox.evaluate(ind)  # Cambia 'tools' por 'toolbox'
 
+    for ind in population:
+        ind.fitness.values = toolbox.evaluate(ind)
 
     musicos_disponibles = [musico for banda in population for musico in banda]
-
-    print("Población original:")
-    for idx, banda in enumerate(population, start=1):
-        print(f"Banda {idx}:")
-        for musico in banda:
-            print(f"  ID: {musico['id']}, Tipo: {musico['tipo']}, Habilidad Técnica: {musico['habilidad_tecnica']}, "
-                  f"Género Favorito: {musico['genero_favorito']}, Carisma: {musico['carisma']}, "
-                  f"Disponibilidad: {musico['disponibilidad']}, Ideologías: {musico['ideologias']}, "
-                  f"Ambición: {musico['ambicion']}, Ubicación Geográfica: {musico['ubicacion_geografica']}")
 
     hof = tools.HallOfFame(1)
     stats = tools.Statistics(lambda ind: ind.fitness.values)
@@ -149,7 +140,6 @@ def execute_ga_with_deap():
             record = stats.compile(population)
             hof.update(population)
 
-            # Escribir los resultados en el archivo dentro del contexto 'with'
             writer.writerow([gen, record["avg"], record["max"]])
             print(f"Generación {gen}: {record}")
 
