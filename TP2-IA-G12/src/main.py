@@ -87,7 +87,7 @@ if config.CONFIG.SELECTION_TYPE == 'Tournament':
 elif config.CONFIG.SELECTION_TYPE == 'Roulette':
     toolbox.register("select", tools.selRoulette)
 elif config.CONFIG.SELECTION_TYPE == 'Rank':
-    toolbox.register("select", tools.selRank)
+    toolbox.register("select", tools.selBest)
 
 if config.CONFIG.CROSSOVER_TYPE == 'CxSimple':
     toolbox.register("mate", cxBanda)
@@ -97,6 +97,9 @@ toolbox.register("mutate", mutar_banda)
 def execute_ga_with_deap():
 
     population = toolbox.population(n=config.CONFIG.POPULATION_SIZE)
+    for ind in population:
+        ind.fitness.values = toolbox.evaluate(ind)  # Cambia 'tools' por 'toolbox'
+
 
     musicos_disponibles = [musico for banda in population for musico in banda]
 
@@ -119,6 +122,9 @@ def execute_ga_with_deap():
         writer.writerow(["Generación", "Fitness Promedio", "Fitness Máximo"])
 
         for gen in range(config.CONFIG.NUMBER_OF_GENERATIONS):
+            for ind in population:
+                ind.fitness.values = toolbox.evaluate(ind)
+
             offspring = toolbox.select(population, len(population))
             offspring = list(map(toolbox.clone, offspring))
 
@@ -131,8 +137,10 @@ def execute_ga_with_deap():
             for mutant in offspring:
                 toolbox.mutate(mutant, musicos_disponibles)
                 del mutant.fitness.values
+                if not mutant.fitness.valid:
+                    mutant.fitness.values = toolbox.evaluate(mutant)
 
-            invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
+            invalid_ind = [ind for ind in population if not ind.fitness.valid]
             fitnesses = map(toolbox.evaluate, invalid_ind)
             for ind, fit in zip(invalid_ind, fitnesses):
                 ind.fitness.values = fit
@@ -141,8 +149,8 @@ def execute_ga_with_deap():
             record = stats.compile(population)
             hof.update(population)
 
+            # Escribir los resultados en el archivo dentro del contexto 'with'
             writer.writerow([gen, record["avg"], record["max"]])
-
             print(f"Generación {gen}: {record}")
 
     best_banda = hof[0]

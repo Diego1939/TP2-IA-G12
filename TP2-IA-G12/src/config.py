@@ -4,6 +4,6 @@ class CONFIG:
     TOURNAMENT_SIZE = 25
     MUTATION_PROB = 0.2
     GENERATIONAL_LEAP = 5
-    CROSSOVER_TYPE = 'CxSimple' # Es random
-    SELECTION_TYPE = 'Tournament'  # Tipo de selección: 'Tournament', 'Roulette', 'Rank'
+    CROSSOVER_TYPE = 'CxSimple' # Es Cruza Simple
+    SELECTION_TYPE = 'Rank'  # Tipo de selección: 'Tournament', 'Roulette', 'Rank'
 
