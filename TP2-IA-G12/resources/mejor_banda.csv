@@ -1,6 +1,6 @@
-Integrante,ID,Tipo,Habilidad T?cnica,G?nero Favorito,Carisma,Disponibilidad,Ideolog?as,Ambici?n,Ubicaci?n Geogr?fica
-Integrante 1,51,Vocalista,60,Metal,71,96,Anarquista,99,Rosario
-Integrante 2,54,Tecladista,55,Metal,52,86,Anarquista,91,Rosario
-Integrante 3,52,Guitarrista,93,Metal,81,96,Anarquista,68,C?rdoba
-Integrante 4,77,Baterista,98,Blues,69,100,Conservador,57,Rosario
-Integrante 5,75,Bajista,78,Blues,82,84,Anarquista,91,Mendoza
+Integrante,ID,Tipo,Habilidad Técnica,Género Favorito,Carisma,Disponibilidad,Ideologías,Ambición,Ubicación Geográfica
+Integrante 1,253,Vocalista,69,Rock,52,94,Ecologista,43,Chaco
+Integrante 2,437,Guitarrista,58,Tango,51,39,Ecologista,55,Chaco
+Integrante 3,470,Baterista,61,Tango,95,55,Ecologista,88,Chaco
+Integrante 4,426,Bajista,76,Rock,80,59,Feminista,14,Chaco
+Integrante 5,251,Tecladista,95,Jazz,86,81,Liberal,54,Chaco

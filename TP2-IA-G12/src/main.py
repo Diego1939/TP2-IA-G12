@@ -2,7 +2,7 @@ import config
 import values
 import csv
 import random
-from deap import base, creator, tools, algorithms
+from deap import base, creator, tools
 
 creator.create("FitnessMax", base.Fitness, weights=(1.0,))
 creator.create("Individual", list, fitness=creator.FitnessMax)
@@ -26,15 +26,31 @@ def generar_musico():
     return musico
 
 def generar_banda():
-    return [generar_musico() for _ in range(5)]  # Se puede tomar de un archivo csv
+    banda = []
+    tipos_usados = set()
+
+    for tipo in values.TIPOS:
+        musico = generar_musico()
+        while musico["tipo"] != tipo:
+            musico = generar_musico()
+        banda.append(musico)
+        tipos_usados.add(tipo)
+
+    while len(banda) < 5:
+        nuevo_musico = generar_musico()
+        if nuevo_musico["tipo"] not in tipos_usados:
+            banda.append(nuevo_musico)
+            tipos_usados.add(nuevo_musico["tipo"])
+
+    return banda
 
 def calcular_aptitud(banda):
     compat_genero = sum(1 for m1 in banda for m2 in banda if m1["genero_favorito"] == m2["genero_favorito"])
     compat_ideologias = sum(1 for m1 in banda for m2 in banda if m1["ideologias"] == m2["ideologias"])
     compat_ubicacion = sum(1 for m1 in banda for m2 in banda if m1["ubicacion_geografica"] == m2["ubicacion_geografica"])
-    compat_disponibilidad = sum(1 for m1 in banda for m2 in banda if abs(m1["disponibilidad"] - m2["disponibilidad"]) < 20)
+    compat_disponibilidad = sum(1 for m1 in banda for m2 in banda if abs(m1["disponibilidad"] - m2["disponibilidad"]) < 15)
 
-    quimica = compat_genero + compat_ideologias + compat_ubicacion + compat_disponibilidad
+    quimica = compat_genero + compat_ideologias + 5 * compat_ubicacion + compat_disponibilidad
     habilidad_tecnica = sum(m["habilidad_tecnica"] for m in banda) / len(banda)
     carisma = sum(m["carisma"] for m in banda) / len(banda)
     compromiso = (sum(m["ambicion"] for m in banda) / len(banda)) + (sum(m["disponibilidad"] for m in banda) / len(banda))
@@ -44,40 +60,21 @@ def calcular_aptitud(banda):
     return aptitud,
 
 def cxBanda(ind1, ind2):
-    combined = ind1 + ind2
-    random.shuffle(combined)
-    tipos_musicos = {}
+    punto_corte = random.randint(1, len(ind1) - 1)
+    hijo1 = ind1[:punto_corte] + ind2[punto_corte:]
+    hijo2 = ind2[:punto_corte] + ind1[punto_corte:]
 
-    for musico in combined:
-        tipo = musico["tipo"]
-        if tipo not in tipos_musicos:
-            tipos_musicos[tipo] = musico
+    return hijo1, hijo2
 
-    new_musicos = list(tipos_musicos.values())
+def mutar_banda(individual, musicos_disponibles):
+    if random.random() < config.CONFIG.MUTATION_PROB:
+        indice_a_mutar = random.randint(0, len(individual) - 1)
+        musico_a_mutar = individual[indice_a_mutar]
+        musicos_mismo_tipo = [m for m in musicos_disponibles if m["tipo"] == musico_a_mutar["tipo"]]
 
-    while len(new_musicos) < 5:
-        tipo_faltante = random.choice([t for t in values.TIPOS if t not in tipos_musicos])
-        nuevo_musico = generar_musico()
-        nuevo_musico["tipo"] = tipo_faltante
-        new_musicos.append(nuevo_musico)
-
-    ind1[:] = new_musicos[:5]
-    ind2[:] = new_musicos[:5]
-
-    return ind1, ind2
-
-def mutar_banda(individual):
-    for i in range(len(individual)):
-        if random.random() < config.CONFIG.MUTATION_PROB:
-            tipo = individual[i]["tipo"]
-            id_original = individual[i]["id"]
-            nuevo_musico = generar_musico()
-
-            # Mantener el ID original y el tipo
-            nuevo_musico["id"] = id_original
-            nuevo_musico["tipo"] = tipo
-
-            individual[i] = nuevo_musico
+        if musicos_mismo_tipo:
+            nuevo_musico = random.choice(musicos_mismo_tipo)
+            individual[indice_a_mutar] = nuevo_musico
     return individual,
 
 toolbox = base.Toolbox()
@@ -92,13 +89,25 @@ elif config.CONFIG.SELECTION_TYPE == 'Roulette':
 elif config.CONFIG.SELECTION_TYPE == 'Rank':
     toolbox.register("select", tools.selRank)
 
-if config.CONFIG.CROSSOVER_TYPE == 'cxBanda':
+if config.CONFIG.CROSSOVER_TYPE == 'CxSimple':
     toolbox.register("mate", cxBanda)
 
 toolbox.register("mutate", mutar_banda)
 
 def execute_ga_with_deap():
+
     population = toolbox.population(n=config.CONFIG.POPULATION_SIZE)
+
+    musicos_disponibles = [musico for banda in population for musico in banda]
+
+    print("Población original:")
+    for idx, banda in enumerate(population, start=1):
+        print(f"Banda {idx}:")
+        for musico in banda:
+            print(f"  ID: {musico['id']}, Tipo: {musico['tipo']}, Habilidad Técnica: {musico['habilidad_tecnica']}, "
+                  f"Género Favorito: {musico['genero_favorito']}, Carisma: {musico['carisma']}, "
+                  f"Disponibilidad: {musico['disponibilidad']}, Ideologías: {musico['ideologias']}, "
+                  f"Ambición: {musico['ambicion']}, Ubicación Geográfica: {musico['ubicacion_geografica']}")
 
     hof = tools.HallOfFame(1)
     stats = tools.Statistics(lambda ind: ind.fitness.values)
@@ -120,7 +129,7 @@ def execute_ga_with_deap():
                     del child2.fitness.values
 
             for mutant in offspring:
-                toolbox.mutate(mutant)
+                toolbox.mutate(mutant, musicos_disponibles)
                 del mutant.fitness.values
 
             invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
